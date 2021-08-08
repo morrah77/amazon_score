@@ -20,18 +20,18 @@ Having no exact element in the set, considering score 0 + weight(phrase, variant
 
 Knowing nothing about the real search volumes, let's assume the following regarding the case when there's no exact element in the set:
 
- - if the search key is a prefix of a search request, it's often requested `as is`, at least by mistake (for example, the user was looking for `phone case`, but tapped `Enter` key after the worh `phone` by mistake, or the similar case for `large bag` -> `large`), so, we can consider it as `rather frequent` and give each prefix match a weight, let's say, K * (1/N), where N - a maximum size of set returned by API, 10 for the case of commonly used keys, less than 10 for rarely used keys, K - some coefficient, for ex. 0.4 for N = 10, 0.4 / (1 + 10 - N) for cases when N < 10,
+ - if the search key is a prefix of a search request, it's often requested `as is`, at least by mistake (for example, the user was looking for `phone case`, but tapped `Enter` key after the word `phone` by mistake, or the similar case for `large bag` -> `large`), so, we can consider it as a `rather frequent` one and give each prefix match a weight, let's say, K * (1/N), where N - a maximum size of set returned by API, 10 for the case of commonly used keys, less than 10 for rarely used keys, K - some coefficient, for ex. 0.4 for N = 10, 0.4 / (1 + 10 - N) for cases when N < 10,
  - if the search key is not a prefix of a request, it's hardly requested `as is`, so let's don't give such a case any weight
- - the estimated score might be calculated as a sum of the weights
+ - the estimated score might be calculated as a sum of the weights and led to the norm of 100
 
-Also, having 10 seconds to make our estimation, we could perform several calls to the atocomplete endpoint with the key combined with some other words ot splitted apath in a case of complex key, but, honestly, having so few information about the exact search request volumes and/or autocomplete API algorythm, I see no reason in building more assumptions than it's done already.
+Also, having 10 seconds to make our estimation, we could perform several calls to the atocomplete endpoint with the key combined with some other words or splitted apart in the case of a complex key, but, honestly, having so few information about the exact search request volumes and/or autocomplete API algorithm, I see no reason in building more assumptions than it's done already.
 
 ###Questions
 
-a. What assumptions did you make? - see above
-b. How does your algorithm work? - see above
-c. Do you think the ( *hint ) that we gave you earlier is correct and if so - why? - Yes and No. Keeping in mind a requirement of estimation the exact search request, it's insigniicant when the key is in the list of requests returned by API (is in the top of the hottest search phrases), but when it comes to the case when the exact key doesn't present in the list, it theoretically could be searched `as is` in some cases (for ex. when it's a prefix of the search request). In the implemented algorithm the fact of sorting significancy isn't taken into account. 
-d. How precise do you think your outcome is and why? - Not precise at all :)))) Just a ton of assumptions. The API expected to use for search request estimation is not the best source of data. For example, Google search request statistics looks more promisable from the prospective of search request scoring, even when it comes to Amazon search (imho).
+ - `a. What assumptions did you make?` - see above
+- `b. How does your algorithm work?` - see above
+- `c. Do you think the ( *hint ) that we gave you earlier is correct and if so - why?` - Yes and no. Keeping in mind a requirement of estimation the exact search request, it's insignificant when the key is in the list of requests returned by API (is in the top of the hottest search phrases), but when it comes to the case when the exact key doesn't present in the list, it theoretically could be searched `as is` in some cases (for ex. when it's a prefix of the search request). In the implemented algorithm the fact of sorting significancy isn't taken into account. 
+- `d. How precise do you think your outcome is and why?` - Not precise at all :)))) Just a ton of assumptions. The API expected to use for search request estimation is not the best source of data. For example, Google search request statistics looks more promisable from the prospective of search request scoring, even when it comes to Amazon search (imho).
 
 
 ##Investigation
@@ -97,3 +97,60 @@ curl -iv -X GET -H "Authorization: Basic dXNlcjpwYXNzd29yZA==" 'http://127.0.0.1
 ```
 mvn test
 ```
+
+##Test results (2021-08-08)
+
+
+####Request 'large bag':
+
+```
+curl -iv -X GET -H "Authorization: Basic dXNlcjpwYXNzd29yZA==" 'http://127.0.0.1:8080/estimate/?keyword=large+bag'
+```
+
+Logs:
+
+```
+["large bag",["large bag","large bags for women","bagel slicer for small and large bagels","large bags for storage","extra large bag with wheels","large bags for women tote","extra large bag","large bag clips","large bags of candy","large bag for travel"],[{},{},{},{},{},{},{},{},{},{}],[],"1QHVK6YAU8QEO"]
+```
+Response:
+```
+200 '{"Keyword":"large bag","score":100}'
+```
+
+Summary: OK
+
+####Request 'large':
+
+```
+curl -iv -X GET -H "Authorization: Basic dXNlcjpwYXNzd29yZA==" 'http://127.0.0.1:8080/estimate/?keyword=large'
+```
+
+Logs:
+
+```
+["large",["bogg bag large beach tote","large dog bed","large dog crate","dehumidifiers for large room or basements","large mouse pad","large water bottle","large pop it","large mirror","large glue sticks","large wall clock"],[{},{},{},{},{},{},{},{},{},{}],[],"1EX135N7PRH5L"]
+```
+Response:
+```
+200 '{"Keyword":"large","score":32}'
+```
+
+Summary: OK
+
+####Request 'dozen':
+
+```
+curl -iv -X GET -H "Authorization: Basic dXNlcjpwYXNzd29yZA==" 'http://127.0.0.1:8080/estimate/?keyword=dozen'
+```
+
+Logs:
+
+```
+["dozen",["cheaper by the dozen","cheaper by the dozen book","cheaper by the dozen dvd","half dozen egg cartons","dozen cousins beans","dozen cupcake containers","dozen roses","dozen a day","dozen cousins","dozen baseballs"],[{},{},{},{},{},{},{},{},{},{}],[],"2OSWD7G2IE7FB"]
+```
+Response:
+```
+200 '{"Keyword":"dozen","score":24}'
+```
+
+Summary: OK

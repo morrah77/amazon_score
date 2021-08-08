@@ -27,8 +27,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class ScoreServiceTest {
     static Map<String, Pair<Integer, List<Object>>> data = new HashMap<String, Pair<Integer, List<Object>>>(){
-        {put("smart", new Pair(10, parseStringToList("smart watch,smart tv,smart light bulbs,32 in smart tv,samsung smart watch,amazon smart plug,owlet smart sock 3,smart plugs,smart sweets,smart lock")));}
-        {put("phone", new Pair(10, parseStringToList("portable phone charger,phone case,car phone holder mount,waterproof phone pouch,phone mount for car,iphone xs max phone case,phone stand,phone,phone holder,phone cases for iphone 11")));}};
+        {put("smart", new Pair(24, parseStringToList("smart watch,smart tv,smart light bulbs,32 in smart tv,samsung smart watch,amazon smart plug,owlet smart sock 3,smart plugs,smart sweets,smart lock")));} // (6 * 0.4 / 10) * 100 = 24
+        {put("phone", new Pair(100, parseStringToList("portable phone charger,phone case,car phone holder mount,waterproof phone pouch,phone mount for car,iphone xs max phone case,phone stand,phone,phone holder,phone cases for iphone 11")));} // 100
+        {put("alfa", new Pair(100, parseStringToList("alfa, beta, gamma")));} // 100
+        {put("beta", new Pair(4, parseStringToList("beta one, beta two, beta three, not beta")));} // (3 * (0.4/(1+10-4)) / 4) * 100 = 4
+    };
 
     @Mock(lenient = true)
     @Qualifier("AmazonDataService")
@@ -37,33 +40,25 @@ class ScoreServiceTest {
     @InjectMocks
     private ScoreService service;
 
-    // TODO generalize it!!!
     @BeforeEach
     public void setUp() {
-        List<Object> entryPhone = new ArrayList<>();
-        entryPhone.add("phone");
-        entryPhone.add(data.get("phone").getValue());
-        ResponseEntity responseEntityPhone = new ResponseEntity<AmazonResponseEntity>(
-                new AmazonResponseEntity(entryPhone), HttpStatus.OK);
-        Mockito.doReturn(responseEntityPhone)
-                .when(dataService)
-                .getData(Mockito.eq("phone"));
-
-        List<Object> entrySmart = new ArrayList<>();
-        entrySmart.add("smart");
-        entrySmart.add(data.get("smart").getValue());
-        ResponseEntity responseEntitySmart = new ResponseEntity<AmazonResponseEntity>(
-        new AmazonResponseEntity(entrySmart), HttpStatus.OK);
-                Mockito.doReturn(responseEntitySmart)
-                .when(dataService)
-                .getData(Mockito.eq("smart"));
+        for (Map.Entry<String, Pair<Integer, List<Object>>> entry: data.entrySet()) {
+            List<Object> entity = new ArrayList<>();
+            entity.add(entry.getKey());
+            entity.add(entry.getValue().getValue());
+            ResponseEntity responseEntityPhone = new ResponseEntity<AmazonResponseEntity>(
+                    new AmazonResponseEntity(entity), HttpStatus.OK);
+            Mockito.doReturn(responseEntityPhone)
+                    .when(dataService)
+                    .getData(Mockito.eq(entry.getKey()));
+        }
     }
 
     @ParameterizedTest
     @MethodSource("mapEntryArgumentProvider")
     void calculateScore(Map.Entry<String, Pair<Integer, List<Object>>> testCase) {
         assertAll(
-                () -> assertEquals(testCase.getValue().getKey(), service.calculateScore(testCase.getValue().getValue()))
+                () -> assertEquals(testCase.getValue().getKey(), service.calculateScore(testCase.getKey(), testCase.getValue().getValue()))
         );
     }
 
@@ -73,7 +68,7 @@ class ScoreServiceTest {
         assertAll(
                 () -> assertDoesNotThrow(() -> result[0] = service.getScore("smart")),
                 () -> Mockito.verify(dataService, Mockito.times(1)).getData("smart"),
-                () -> assertEquals(10, result[0])
+                () -> assertEquals(24, result[0])
         );
     }
 

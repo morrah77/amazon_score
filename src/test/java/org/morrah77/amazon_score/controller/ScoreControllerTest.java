@@ -66,7 +66,7 @@ class ScoreControllerTest {
     void should_estimate_RespondWithCorrectScore_WhenDataContainSmart() {
         String keyword = "smart";
         final ResponseEntity<String>[] response = new ResponseEntity[1];
-        String expectedResponse = "{\"Keyword\":\"smart\",\"score\":10}";
+        String expectedResponse = "{\"Keyword\":\"smart\",\"score\":24}";
         assertAll(
                 () -> assertDoesNotThrow(() -> {
                     response[0] = template.withBasicAuth("user", "password")
@@ -81,7 +81,7 @@ class ScoreControllerTest {
     void should_estimate_RespondWithCorrectScore_WhenDataContainPhone() {
         String keyword = "phone";
         final ResponseEntity<String>[] response = new ResponseEntity[1];
-        String expectedResponse = "{\"Keyword\":\"phone\",\"score\":10}";
+        String expectedResponse = "{\"Keyword\":\"phone\",\"score\":100}";
         assertAll(
                 () -> assertDoesNotThrow(() -> {
                     response[0] = template.withBasicAuth("user", "password")
